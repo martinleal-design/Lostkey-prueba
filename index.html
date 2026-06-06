@@ -70,9 +70,9 @@
 
         // --- DATOS DEL MENÚ ---
         const colores = [
-            { id: "negro", label: "Negro", hex: "#18181b" },
-            { id: "gris_melange", label: "Gris Melange", hex: "#d4d4d8" },
-            { id: "rosado", label: "Rosado", hex: "#fbcfe8" }
+            { id: "negro", label: "Negro", hex: "#18181b", bg: "#71717a" }, // Gris oscuro para el negro
+            { id: "gris_melange", label: "Gris Melange", hex: "#d4d4d8", bg: "#e4e4e7" }, // Gris pastel
+            { id: "rosado", label: "Rosado", hex: "#fbcfe8", bg: "#fce7f3" } // Rosa pastel
         ];
 
         const tallas = ["S", "M", "L", "XL"];
@@ -88,12 +88,12 @@
             // Estado del pedido
             const [pedido, setPedido] = useState({
                 producto: null,
-                color: 'negro',
+                color: null,
                 talla: null,
-                bolsillos: 'con',
-                bordado_poleron: 'delantero',
-                bolsillos_pantalon: 'con',
-                bordado_pantalon: 'sin',
+                bolsillos: null,
+                bordado_poleron: null,
+                bolsillos_pantalon: null,
+                bordado_pantalon: null,
                 envio: 'retiro',
                 contacto: { nombre: '', correo: '', instagram: '', whatsapp: '' }
             });
@@ -124,7 +124,9 @@
             // Validaciones para avanzar
             const canNext = () => {
                 if (currentStep === "producto") return pedido.producto !== null;
-                if (currentStep === "color_talla") return pedido.talla !== null;
+                if (currentStep === "color_talla") return pedido.talla !== null && pedido.color !== null;
+                if (currentStep === "detalles_poleron") return pedido.bolsillos !== null && pedido.bordado_poleron !== null;
+                if (currentStep === "detalles_pantalon") return pedido.bolsillos_pantalon !== null && pedido.bordado_pantalon !== null;
                 if (currentStep === "contacto") return pedido.contacto.nombre.trim() !== '' && pedido.contacto.correo.includes('@');
                 return true;
             };
@@ -132,17 +134,67 @@
             // Nombres de archivos dinámicos para las imágenes
             const getPreviewFileName = () => {
                 const p = pedido;
-                if (!p.producto) return null;
+                if (!p.producto || !p.color) return null;
                 
-                // Formato esperado: poleron_negro_bolsillos-con_bordado-delantero.png
+                // --- MAPEO ESPECÍFICO: POLERÓN ROSADO ---
+                if (p.producto === 'poleron' && p.color === 'rosado') {
+                    let front = '';
+                    let back = '';
+
+                    // Lógica para el FRENTE (Por defecto muestra con bordado y bolsillos si no han elegido)
+                    if (p.bordado_poleron === 'delantero' || p.bordado_poleron === 'ambos' || p.bordado_poleron === null) {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON ROSADO/Rosado- bolsillos y bordados.png`
+                            : `POLERON ROSADO/sin bolsillo pero con bordado alfrente.png`;
+                    } else {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON ROSADO/rosado con bolsillos y sin bordado.png`
+                            : `POLERON ROSADO/sin bolsillos y sin bordados frente.png`;
+                    }
+
+                    // Lógica para la ESPALDA
+                    if (p.bordado_poleron === 'espalda' || p.bordado_poleron === 'ambos') {
+                        back = `POLERON ROSADO/rosado-atras bordado.png`;
+                    } else {
+                        back = `POLERON ROSADO/Espalda sin bordado rosado.png`;
+                    }
+
+                    // Solo dividir la pantalla en el paso de detalles del polerón si ya seleccionó un bordado
+                    if (currentStep === 'detalles_poleron' && p.bordado_poleron !== null) {
+                        return [front, back];
+                    }
+                    return front;
+                }
+
+                // Formato estándar para polerones (Frente y Espalda simultáneos)
                 if (p.producto === 'poleron') {
-                    return `poleron_${p.color}_bolsillos-${p.bolsillos}_bordado-${p.bordado_poleron}.png`;
+                    const bols = p.bolsillos || 'con'; // Muestra bolsillos por defecto
+                    const bor = p.bordado_poleron || 'delantero'; // Muestra bordado delantero por defecto
+                    const frontType = (bor === 'delantero' || bor === 'ambos') ? 'delantero' : 'sin';
+                    const backType = (bor === 'espalda' || bor === 'ambos') ? 'espalda' : 'sin';
+                    
+                    const front = `poleron_${p.color}_bolsillos-${bols}_bordado-${frontType}.png`;
+                    const back = `poleron_${p.color}_bolsillos-sin_bordado-${backType}.png`;
+                    
+                    // Solo dividir la pantalla en el paso de detalles si ya escogió bordado
+                    if (currentStep === 'detalles_poleron' && p.bordado_poleron !== null) {
+                        return [front, back];
+                    }
+                    return front;
                 } 
+                
+                // Pantalón y Conjunto
                 if (p.producto === 'pantalon') {
-                    return `pantalon_${p.color}_bolsillos-${p.bolsillos_pantalon}_bordado-${p.bordado_pantalon}.png`;
+                    const bol = p.bolsillos_pantalon || 'sin';
+                    const bor = p.bordado_pantalon || 'sin';
+                    return `pantalon_${p.color}_bolsillos-${bol}_bordado-${bor}.png`;
                 } 
                 if (p.producto === 'conjunto') {
-                    return `conjunto_${p.color}_bolsillos-${p.bolsillos}_bordadopol-${p.bordado_poleron}_bolsillospan-${p.bolsillos_pantalon}_bordadopan-${p.bordado_pantalon}.png`;
+                    const bol_pol = p.bolsillos || 'sin';
+                    const bor_pol = p.bordado_poleron || 'sin';
+                    const bol_pan = p.bolsillos_pantalon || 'sin';
+                    const bor_pan = p.bordado_pantalon || 'sin';
+                    return `conjunto_${p.color}_bolsillos-${bol_pol}_bordadopol-${bor_pol}_bolsillospan-${bol_pan}_bordadopan-${bor_pan}.png`;
                 }
                 return null;
             };
@@ -152,6 +204,11 @@
                 if (pedido.producto === 'pantalon') type = 'Pantalón';
                 else if (pedido.producto === 'poleron') type = 'Polerón';
                 else if (pedido.producto === 'conjunto') type = 'Conjunto';
+
+                if (!pedido.color) {
+                    return `https://placehold.co/800x1000/e4e4e7/18181b?text=${type}+%0A(Selecciona+Color)`;
+                }
+
                 const colorObj = colores.find(c => c.id === pedido.color);
                 const colorHex = colorObj ? colorObj.hex.replace('#', '') : '18181b';
                 const textCol = pedido.color === 'negro' ? 'ffffff' : '18181b';
@@ -214,7 +271,7 @@
                     href="https://wa.me/56966808247" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="fixed bottom-28 right-6 md:bottom-8 md:right-8 z-[100] bg-[#25D366] text-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-transform"
+                    className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-[100] bg-[#25D366] text-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-transform"
                     aria-label="Hablar por WhatsApp"
                 >
                     <svg className="w-8 h-8 md:w-9 md:h-9" fill="currentColor" viewBox="0 0 24 24">
@@ -328,7 +385,7 @@
                             <button onClick={() => setIsStarted(false)} className="w-10 h-10 md:w-12 md:h-12 bg-white md:bg-zinc-100 rounded-full flex items-center justify-center shadow-sm hover:bg-zinc-200 transition-colors">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                             </button>
-                            <span className="font-black text-xl md:text-2xl tracking-tighter hidden md:block">LOSTKEY 🔑</span>
+                            <img src="./img/lostkey-superior.png" alt="Lostkey" className="h-12 md:h-16 object-contain" />
                         </div>
 
                         <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-black mb-16 md:mb-24 text-center uppercase tracking-widest text-black mt-16">
@@ -350,39 +407,16 @@
                                     className="relative flex flex-col items-center justify-between bg-white rounded-[2.5rem] md:rounded-[3rem] p-8 w-64 h-72 md:w-[320px] md:h-[360px] transition-all duration-300 border-2 border-black/80 shadow-[0_15px_40px_rgba(0,0,0,0.08)] hover:-translate-y-2 hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)] group"
                                 >
                                     <div className="flex-1 w-full flex items-center justify-center p-4 mb-6">
-                                        {/* SVG Inline. Si decides usar imágenes, reemplaza este <svg> por <img src="..." /> */}
-                                        <svg viewBox="0 0 100 100" className="w-full h-full max-h-40 md:max-h-52 text-black mix-blend-multiply opacity-80 transition-opacity group-hover:opacity-100 group-hover:scale-105 duration-300">
-                                            {prod.id === 'poleron' && (
-                                                <g stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinejoin="round">
-                                                    <path d="M25,40 Q50,20 75,40 L90,75 L80,80 L70,50 L70,85 L30,85 L30,50 L20,80 L10,75 Z"/>
-                                                    <path d="M40,25 Q50,5 60,25"/>
-                                                    <rect x="35" y="60" width="30" height="20" rx="3"/>
-                                                    <path d="M50,5 L50,25 M40,85 L40,90 M60,85 L60,90"/>
-                                                </g>
-                                            )}
-                                            {prod.id === 'conjunto' && (
-                                                <g stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinejoin="round">
-                                                    <g transform="translate(-18, -15) scale(0.75)">
-                                                        <path d="M25,40 Q50,20 75,40 L90,75 L80,80 L70,50 L70,85 L30,85 L30,50 L20,80 L10,75 Z"/>
-                                                        <path d="M40,25 Q50,5 60,25"/>
-                                                        <rect x="35" y="60" width="30" height="20" rx="3"/>
-                                                    </g>
-                                                    <g transform="translate(35, 20) scale(0.65)">
-                                                        <path d="M30,20 L70,20 L85,90 L55,90 L50,40 L45,90 L15,90 Z"/>
-                                                        <path d="M40,20 L40,35 M60,20 L60,35"/>
-                                                        <path d="M30,25 L70,25 M50,20 L50,40" strokeWidth="1"/>
-                                                    </g>
-                                                </g>
-                                            )}
-                                            {prod.id === 'pantalon' && (
-                                                <g stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinejoin="round">
-                                                    <path d="M30,20 L70,20 L85,90 L55,90 L50,40 L45,90 L15,90 Z"/>
-                                                    <path d="M40,20 L40,35 M60,20 L60,35"/>
-                                                    <path d="M30,25 L70,25 M50,20 L50,40" strokeWidth="1"/>
-                                                    <path d="M20,40 L25,60 M80,40 L75,60" strokeWidth="1"/>
-                                                </g>
-                                            )}
-                                        </svg>
+                                        <img 
+                                            src={`./img/${prod.id}-icono.png`} 
+                                            alt={prod.nombre} 
+                                            onError={(e) => {
+                                                // Fallback por si la imagen aún no está en la carpeta img/
+                                                e.target.onerror = null; 
+                                                e.target.src = `https://placehold.co/400x500/ffffff/18181b?text=${prod.nombre}`;
+                                            }}
+                                            className="w-full h-full max-h-40 md:max-h-52 object-contain mix-blend-multiply opacity-80 transition-opacity group-hover:opacity-100 group-hover:scale-105 duration-300"
+                                        />
                                     </div>
                                     <div className="text-sm md:text-lg font-bold tracking-widest text-black uppercase mt-auto">
                                         {prod.nombre}
@@ -427,33 +461,57 @@
                                 Enviar Comprobante a @{CONFIG.ig_user} →
                             </a>
                         </div>
-                        {WhatsAppButton}
                     </div>
                 );
             }
 
             // PANTALLAS DEL CONFIGURADOR (PASO 2 EN ADELANTE)
+            const currentColorObj = colores.find(c => c.id === pedido.color);
+            const panelBgColor = currentColorObj ? currentColorObj.bg : '#f4f4f5';
+
             return (
                 <div className="h-[100dvh] flex flex-col md:flex-row bg-white fade-in overflow-hidden">
                     
                     {/* PANEL IZQUIERDO: PREVIEW DINÁMICO */}
-                    <div className="w-full md:w-1/2 lg:w-3/5 bg-zinc-100 relative h-[45dvh] md:h-full flex flex-col items-center justify-center p-4 md:p-8">
+                    <div 
+                        className="w-full md:w-1/2 lg:w-3/5 relative h-[45dvh] md:h-full flex flex-col items-center justify-center p-4 md:p-8 transition-colors duration-500"
+                        style={{ backgroundColor: panelBgColor }}
+                    >
                         {/* Header Logo Mobile */}
-                        <div className="absolute top-4 left-6 md:hidden font-black text-xl tracking-tighter z-10">LOSTKEY 🔑</div>
+                        <div className="absolute top-6 left-6 md:hidden z-10">
+                            <img src="./img/lostkey-superior.png" alt="Lostkey" className="h-12 object-contain" />
+                        </div>
                         
                         {/* Imagen del producto */}
-                        <div className="w-full h-full flex items-center justify-center relative z-0">
-                            <img 
-                                key={JSON.stringify(pedido)} 
-                                src={`./img/${getPreviewFileName()}`} 
-                                onError={(e) => {
-                                    // Fallback a placeholder si no hay imagen real
-                                    e.target.onerror = null; 
-                                    e.target.src = getPlaceholderUrl();
-                                }}
-                                alt="Preview" 
-                                className="max-w-full max-h-full object-contain drop-shadow-2xl fade-in mix-blend-darken"
-                            />
+                        <div className="w-full h-full flex flex-row items-center justify-center relative z-0 gap-2 md:gap-4 px-2 md:px-0">
+                            {(() => {
+                                const filenames = getPreviewFileName();
+                                if (!filenames) {
+                                    return (
+                                        <img 
+                                            key="placeholder" 
+                                            src={getPlaceholderUrl()} 
+                                            alt="Preview" 
+                                            className="max-w-full max-h-full object-contain drop-shadow-2xl fade-in mix-blend-darken"
+                                        />
+                                    );
+                                }
+                                
+                                const filesArray = Array.isArray(filenames) ? filenames : [filenames];
+                                
+                                return filesArray.map((file, index) => (
+                                    <img 
+                                        key={JSON.stringify(pedido) + index} 
+                                        src={`./img/${file}`} 
+                                        onError={(e) => {
+                                            e.target.onerror = null; 
+                                            e.target.src = getPlaceholderUrl();
+                                        }}
+                                        alt={`Preview ${index}`} 
+                                        className={`${filesArray.length > 1 ? 'w-1/2' : 'max-w-full'} max-h-full object-contain drop-shadow-2xl fade-in mix-blend-darken`}
+                                    />
+                                ));
+                            })()}
                         </div>
 
                         {/* Detalles Flotantes (Badge) */}
@@ -478,7 +536,7 @@
                         
                         {/* Header Desktop */}
                         <div className="hidden md:flex justify-between items-center p-8 pb-4">
-                            <div className="font-black text-3xl tracking-tighter">LOSTKEY 🔑</div>
+                            <img src="./img/lostkey-superior.png" alt="Lostkey" className="h-16 object-contain" />
                             <div className="text-sm font-semibold bg-zinc-100 px-4 py-2 rounded-full">Paso {step + 1} de {steps.length}</div>
                         </div>
 
@@ -495,8 +553,6 @@
                                     ← Volver al inicio
                                 </button>
                             )}
-
-                            {/* PASO 1 FUE MOVIDO A PANTALLA COMPLETA ARRIBA */}
 
                             {/* PASO 2: COLOR Y TALLA */}
                             {currentStep === "color_talla" && (
@@ -525,19 +581,29 @@
                                         <h3 className="font-semibold text-lg mb-4 flex justify-between items-end">
                                             Talla
                                         </h3>
-                                        <div className="grid grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-4 gap-3 md:gap-4">
                                             {tallas.map(t => (
                                                 <button 
                                                     key={t} 
                                                     onClick={() => updatePedido('talla', t)}
-                                                    className={`h-16 rounded-2xl border-2 font-bold text-xl transition-all ${
-                                                        pedido.talla === t ? 'border-black bg-black text-white' : 'border-zinc-200 bg-white hover:border-zinc-300'
+                                                    className={`py-4 rounded-2xl font-bold text-lg md:text-xl transition-all ${
+                                                        pedido.talla === t 
+                                                        ? 'bg-black text-white shadow-lg shadow-black/30 scale-105' 
+                                                        : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
                                                     }`}
                                                 >
                                                     {t}
                                                 </button>
                                             ))}
                                         </div>
+                                        
+                                        {/* TABLA DE TALLAS */}
+                                        {(pedido.producto === 'poleron' || pedido.producto === 'conjunto') && (
+                                            <div className="mt-8 w-full slide-in-bottom">
+                                                <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Guía de Tallas (Polerón)</h4>
+                                                <img src="./img/POLERON ROSADO/Tallas poleron (1).png" alt="Guía de Tallas Polerón" className="w-full max-w-md mx-auto object-contain rounded-2xl shadow-sm border border-black/5" />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -568,7 +634,7 @@
                                         <h3 className="font-semibold text-lg mb-4">Bordado</h3>
                                         <div className="grid grid-cols-2 gap-4">
                                             {[
-                                                {id: 'delantero', l: 'Delantero'}, {id: 'trasero', l: 'Trasero'}, 
+                                                {id: 'delantero', l: 'Delantero'}, {id: 'espalda', l: 'Trasero'}, 
                                                 {id: 'ambos', l: 'Ambos Lados'}, {id: 'sin', l: 'Sin Bordado'}
                                             ].map(op => (
                                                 <button 
@@ -785,7 +851,6 @@
                             </button>
                         </div>
                     </div>
-                    {WhatsAppButton}
                 </div>
             );
         }
