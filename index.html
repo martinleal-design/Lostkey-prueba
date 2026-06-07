@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOSTKEY - Crea tu estilo</title>
+    <link rel="icon" href="./img/Favicon.png" type="image/png">
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -166,6 +167,66 @@
                     return front;
                 }
 
+                // --- MAPEO ESPECÍFICO: POLERÓN GRIS ---
+                if (p.producto === 'poleron' && p.color === 'gris_melange') {
+                    let front = '';
+                    let back = '';
+
+                    // Lógica para el FRENTE
+                    if (p.bordado_poleron === 'delantero' || p.bordado_poleron === 'ambos' || p.bordado_poleron === null) {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON GRIS/POLERON GRIS ENTERO.png`
+                            : `POLERON GRIS/Gris frente sin bolsillos pero con bordado.png`;
+                    } else {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON GRIS/gris frente sin bordado con bolsillos.png`
+                            : `POLERON GRIS/gris sin bordado y sin bolsillo.png`;
+                    }
+
+                    // Lógica para la ESPALDA
+                    if (p.bordado_poleron === 'espalda' || p.bordado_poleron === 'ambos') {
+                        back = `POLERON GRIS/parte trasera con bordado.png`;
+                    } else {
+                        back = `POLERON GRIS/parte trasera SIN BORDADO.png`;
+                    }
+
+                    // Solo dividir la pantalla en el paso de detalles
+                    if (currentStep === 'detalles_poleron' && p.bordado_poleron !== null) {
+                        return [front, back];
+                    }
+                    return front;
+                }
+
+                // --- MAPEO ESPECÍFICO: POLERÓN NEGRO ---
+                if (p.producto === 'poleron' && p.color === 'negro') {
+                    let front = '';
+                    let back = '';
+
+                    // Lógica para el FRENTE
+                    if (p.bordado_poleron === 'delantero' || p.bordado_poleron === 'ambos' || p.bordado_poleron === null) {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON NEGRO/parte fronal polerno negro con todo.png`
+                            : `POLERON NEGRO/frontal con bordado sin bolsillos.png`;
+                    } else {
+                        front = (p.bolsillos === 'con' || p.bolsillos === null)
+                            ? `POLERON NEGRO/frontal sin bordado con bosillos.png`
+                            : `POLERON NEGRO/frontal sin nada.png`;
+                    }
+
+                    // Lógica para la ESPALDA
+                    if (p.bordado_poleron === 'espalda' || p.bordado_poleron === 'ambos') {
+                        back = `POLERON NEGRO/trasero con bordado (1).png`;
+                    } else {
+                        back = `POLERON NEGRO/trasero sin bordado (1).png`;
+                    }
+
+                    // Solo dividir la pantalla en el paso de detalles
+                    if (currentStep === 'detalles_poleron' && p.bordado_poleron !== null) {
+                        return [front, back];
+                    }
+                    return front;
+                }
+
                 // Formato estándar para polerones (Frente y Espalda simultáneos)
                 if (p.producto === 'poleron') {
                     const bols = p.bolsillos || 'con'; // Muestra bolsillos por defecto
@@ -298,7 +359,7 @@
                         {/* Header */}
                         <div className="flex justify-center items-center py-2 bg-white z-10 shadow-sm relative h-16 md:h-24">
                             <img 
-                                src="../Diseño%20sin%20título%20(11).png" 
+                                src="./img/logo%20encabezado.png" 
                                 alt="Lostkey Logo" 
                                 className="h-full object-contain scale-[2] md:scale-[2.5]"
                             />
@@ -337,12 +398,12 @@
 
                                 <div className="grid grid-cols-3 gap-1 md:gap-4 w-full max-w-4xl">
                                     {[
-                                        "./img/POLERON ROSADO/Rosado- bolsillos y bordados.png",
-                                        "./img/POLERON ROSADO/rosado-atras bordado.png",
-                                        "./img/poleron-icono.png",
-                                        "./img/conjunto-icono.png",
-                                        "./img/POLERON ROSADO/rosado con bolsillos y sin bordado.png",
-                                        "./img/pantalon-icono.png"
+                                        "./img/fotos%20de%20instagram/10.png",
+                                        "./img/fotos%20de%20instagram/11.png",
+                                        "./img/fotos%20de%20instagram/6.png",
+                                        "./img/fotos%20de%20instagram/7.png",
+                                        "./img/fotos%20de%20instagram/Proyecto%20nuevo%20(12).png",
+                                        "./img/fotos%20de%20instagram/post%20poto.png"
                                     ].map((imgSrc, i) => (
                                         <a href={`https://instagram.com/${CONFIG.ig_user}`} target="_blank" rel="noopener noreferrer" key={i} className="group relative aspect-square bg-zinc-50 overflow-hidden cursor-pointer shadow-sm">
                                             <img src={imgSrc} className="w-full h-full object-cover mix-blend-darken group-hover:scale-110 transition-transform duration-700" alt={`Post ${i}`} />
@@ -419,7 +480,7 @@
                             <button onClick={() => setIsStarted(false)} className="w-10 h-10 md:w-12 md:h-12 bg-white md:bg-zinc-100 rounded-full flex items-center justify-center shadow-sm hover:bg-zinc-200 transition-colors">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                             </button>
-                            <img src="./img/lostkey-superior.png" alt="Lostkey" className="h-12 md:h-16 object-contain" />
+                            <img src="./img/logo%20encabezado.png" alt="Lostkey" className="h-12 md:h-16 object-contain" />
                         </div>
 
                         <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-black mb-16 md:mb-24 text-center uppercase tracking-widest text-black mt-16">
